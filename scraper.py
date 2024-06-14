@@ -112,14 +112,18 @@ def get_publisher():
 
 
 def get_doi():
-    doi = driver.find_element(By.CSS_SELECTOR, "xpl-document-details > div > "
-                                               "div.document-main.global-content-width-w-rr > div > "
-                                               "div.document-main-content-container.col-19-24 > section > "
-                                               "div.document-main-left-trail-content > div > xpl-document-abstract > "
-                                               "section > div.abstract-desktop-div.hide-mobile.text-base-md-lh > "
-                                               "div.row.g-0.u-pt-1 > div:nth-child(2) > "
-                                               "div.u-pb-1.stats-document-abstract-doi > a").text
-    return doi
+    try:
+        doi = driver.find_element(By.CSS_SELECTOR, "xpl-document-details > div > "
+                                                   "div.document-main.global-content-width-w-rr > div > "
+                                                   "div.document-main-content-container.col-19-24 > section > "
+                                                   "div.document-main-left-trail-content > div > xpl-document-abstract > "
+                                                   "section > div.abstract-desktop-div.hide-mobile.text-base-md-lh > "
+                                                   "div.row.g-0.u-pt-1 > div:nth-child(2) > "
+                                                   "div.u-pb-1.stats-document-abstract-doi > a").text
+        return doi
+    except NoSuchElementException:
+        return None
+
 
 
 # "#xplMainContentLandmark > div > xpl-document-details > div > div.document-main.global-content-width-w-rr > div > div.document-main-content-container.col-19-24 > section > div.document-main-left-trail-content > div > xpl-document-abstract > section > div.abstract-desktop-div.hide-mobile.text-base-md-lh > div.row.g-0.u-pt-1 > div:nth-child(1) > div.u-pb-1.doc-abstract-pubdate"
@@ -169,13 +173,16 @@ def get_published_in():
 
 
 def get_authors():
-    arrow_down = driver.find_element(By.CSS_SELECTOR, "#authors-header > div > i")
-    arrow_down.click()
-    time.sleep(1)
-    authors_data = driver.find_elements(By.CSS_SELECTOR, "#authors > div")
-    result = [{"name": author.text.split('\n')[0], "from": author.text.split('\n')[1]} for author in authors_data]
-    # print(authors_data.pop().text)
-    return result
+    try:
+        arrow_down = driver.find_element(By.CSS_SELECTOR, "#authors-header > div > i")
+        arrow_down.click()
+        time.sleep(1)
+        authors_data = driver.find_elements(By.CSS_SELECTOR, "#authors > div")
+        result = [{"name": author.text.split('\n')[0], "from": author.text.split('\n')[1]} for author in authors_data]
+        # print(authors_data.pop().text)
+        return result
+    except NoSuchElementException:
+        return None
 
 
 def get_ieee_keywords():
@@ -257,5 +264,4 @@ if __name__ == '__main__':
             time.sleep(3)
         print(driver.current_url)
         next_page(page)
-
     driver.quit()
