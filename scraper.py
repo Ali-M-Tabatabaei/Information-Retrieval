@@ -32,11 +32,18 @@ def has_page_number():
 
 
 def get_title():
-    title = driver.find_element(By.CSS_SELECTOR,
-                                "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
-                                "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
-                                "div.document-header-inner-container.row.g-0 > div > div > "
-                                "div.row.g-0.document-title-fix > div > div.left-container.w-100 > h1 > span")
+    try:
+        title = driver.find_element(By.CSS_SELECTOR,
+                                    "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
+                                    "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
+                                    "div.document-header-inner-container.row.g-0 > div > div > "
+                                    "div.row.g-0.document-title-fix > div > div.left-container.w-100 > h1 > span")
+    except NoSuchElementException:
+        title = driver.find_element(By.CSS_SELECTOR, "xpl-courses > div > xpl-courses-details > div > "
+                                                     "div.header--course-details.row.g-0.global-margins > "
+                                                     "div.col.header--course-details__title-icon-container.u-flex"
+                                                     "-display-flex.u-flex-align-items-center > "
+                                                     "div.col.header--course-details__title-container > h2")
     return title.text
 
 
@@ -170,7 +177,8 @@ def get_ieee_keywords():
     arrow_down = driver.find_element(By.CSS_SELECTOR, "#keywords-header > div > i")
     arrow_down.click()
     time.sleep(1)
-    keywords_data = driver.find_elements(By.CSS_SELECTOR, "#keywords > xpl-document-keyword-list > section > div > ul > li:nth-child(1) > ul > li > a")
+    keywords_data = driver.find_elements(By.CSS_SELECTOR,
+                                         "#keywords > xpl-document-keyword-list > section > div > ul > li:nth-child(1) > ul > li > a")
     result = [keyword.text for keyword in keywords_data]
     return result
 
@@ -179,7 +187,8 @@ def get_author_keywords():
     # arrow_down = driver.find_element(By.CSS_SELECTOR, "#keywords-header > div > i")
     # arrow_down.click()
     # time.sleep(1)
-    keywords_data = driver.find_elements(By.CSS_SELECTOR, "#keywords > xpl-document-keyword-list > section > div > ul > li:nth-child(3) > ul > li > a")
+    keywords_data = driver.find_elements(By.CSS_SELECTOR,
+                                         "#keywords > xpl-document-keyword-list > section > div > ul > li:nth-child(3) > ul > li > a")
     result = [keyword.text for keyword in keywords_data]
     return result
 
@@ -202,6 +211,9 @@ def save_paper(paper):
         "IEEE keywords": get_ieee_keywords(),
         "Author Keywords": get_author_keywords()
     }
+    driver.back()
+    driver.back()
+    driver.back()
     return paper_data
 
 
@@ -210,13 +222,15 @@ def next_page():
 
 
 if __name__ == '__main__':
-    search_paper('Blockchain')
+    search_query = 'Blockchain'
+    search_paper(search_query)
     time.sleep(5)
     # for page in range(0, 5):
     papers = get_result_papers()
     print(papers)
-    # for paper in papers:
-    data = save_paper(papers.pop())
-    print(data)
+    for paper in papers:
+        data = save_paper(paper)
+        print(data)
+        time.sleep(3)
 
     driver.quit()
