@@ -166,6 +166,24 @@ def get_authors():
     return result
 
 
+def get_ieee_keywords():
+    arrow_down = driver.find_element(By.CSS_SELECTOR, "#keywords-header > div > i")
+    arrow_down.click()
+    time.sleep(1)
+    keywords_data = driver.find_elements(By.CSS_SELECTOR, "#keywords > xpl-document-keyword-list > section > div > ul > li:nth-child(1) > ul > li > a")
+    result = [keyword.text for keyword in keywords_data]
+    return result
+
+
+def get_author_keywords():
+    # arrow_down = driver.find_element(By.CSS_SELECTOR, "#keywords-header > div > i")
+    # arrow_down.click()
+    # time.sleep(1)
+    keywords_data = driver.find_elements(By.CSS_SELECTOR, "#keywords > xpl-document-keyword-list > section > div > ul > li:nth-child(3) > ul > li > a")
+    result = [keyword.text for keyword in keywords_data]
+    return result
+
+
 def save_paper(paper):
     paper.click()
     time.sleep(2)
@@ -181,7 +199,8 @@ def save_paper(paper):
         "abstract": get_abstract(),
         "Published in": get_published_in(),
         "Authors": get_authors(),
-
+        "IEEE keywords": get_ieee_keywords(),
+        "Author Keywords": get_author_keywords()
     }
     return paper_data
 
