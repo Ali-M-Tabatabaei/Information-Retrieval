@@ -123,11 +123,14 @@ def get_doi():
     return doi
 
 
-#
+def get_publication_date():
+    publication_date = driver.find_element(By.CSS_SELECTOR, '#xplMainContentLandmark > div > xpl-document-details > div > div.document-main.global-content-width-w-rr > div > div.document-main-content-container.col-19-24 > section > div.document-main-left-trail-content > div > xpl-document-abstract > section > div.abstract-desktop-div.hide-mobile.text-base-md-lh > div.row.g-0.u-pt-1 > div:nth-child(1) > div.u-pb-1.doc-abstract-confdate').text
+    return publication_date.split(': ')[1]
+
 
 def save_paper(paper):
     paper.click()
-    time.sleep(1)
+    time.sleep(2)
     paper_data = {
         "Title": get_title(),
         "Pages": None,
@@ -136,6 +139,7 @@ def save_paper(paper):
         "Full Text Views": get_full_text_views(),
         "Publisher": get_publisher(),
         "DOI": get_doi(),
+        "Date of Publication": get_publication_date(),
 
     }
     return paper_data
@@ -147,7 +151,7 @@ def next_page():
 
 if __name__ == '__main__':
     search_paper('Blockchain')
-    time.sleep(2)
+    time.sleep(5)
     # for page in range(0, 5):
     papers = get_result_papers()
     print(papers)
