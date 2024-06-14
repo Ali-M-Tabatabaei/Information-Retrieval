@@ -7,6 +7,9 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 
+
+global depth
+
 option = webdriver.ChromeOptions()
 # option.add_argument("start-maximized")
 option.add_experimental_option("detach", True)
@@ -38,12 +41,6 @@ def get_title():
                                 "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
                                 "div.document-header-inner-container.row.g-0 > div > div > "
                                 "div.row.g-0.document-title-fix > div > div.left-container.w-100 > h1 > span")
-    # except NoSuchElementException:
-    #     title = driver.find_element(By.CSS_SELECTOR, "xpl-courses > div > xpl-courses-details > div > "
-    #                                                  "div.header--course-details.row.g-0.global-margins > "
-    #                                                  "div.col.header--course-details__title-icon-container.u-flex"
-    #                                                  "-display-flex.u-flex-align-items-center > "
-    #                                                  "div.col.header--course-details__title-container > h2")
     return title.text
 
 
@@ -125,8 +122,6 @@ def get_doi():
         return None
 
 
-
-# "#xplMainContentLandmark > div > xpl-document-details > div > div.document-main.global-content-width-w-rr > div > div.document-main-content-container.col-19-24 > section > div.document-main-left-trail-content > div > xpl-document-abstract > section > div.abstract-desktop-div.hide-mobile.text-base-md-lh > div.row.g-0.u-pt-1 > div:nth-child(1) > div.u-pb-1.doc-abstract-pubdate"
 def get_publication_date():
     try:
         publication_date = driver.find_element(By.CSS_SELECTOR, 'xpl-document-details > '
@@ -173,6 +168,7 @@ def get_published_in():
 
 
 def get_authors():
+    global depth
     try:
         arrow_down = driver.find_element(By.CSS_SELECTOR, "#authors-header > div > i")
         arrow_down.click()
@@ -180,18 +176,22 @@ def get_authors():
         authors_data = driver.find_elements(By.CSS_SELECTOR, "#authors > div")
         result = [{"name": author.text.split('\n')[0], "from": author.text.split('\n')[1]} for author in authors_data]
         # print(authors_data.pop().text)
+        depth += 1
         return result
     except NoSuchElementException:
         return None
 
 
 def get_ieee_keywords():
+    global depth
     arrow_down = driver.find_element(By.CSS_SELECTOR, "#keywords-header > div > i")
     arrow_down.click()
     time.sleep(1)
     keywords_data = driver.find_elements(By.CSS_SELECTOR,
-                                         "#keywords > xpl-document-keyword-list > section > div > ul > li:nth-child(1) > ul > li > a")
+                                         "#keywords > xpl-document-keyword-list > section > div > ul > li:nth-child("
+                                         "1) > ul > li > a")
     result = [keyword.text for keyword in keywords_data]
+    depth += 1
     return result
 
 
@@ -234,9 +234,8 @@ def save_paper(paper):
             "IEEE keywords": get_ieee_keywords(),
             "Author Keywords": get_author_keywords()
         }
-        driver.back()
-        driver.back()
-        driver.back()
+        for i in range(0, depth + 1):
+            driver.back()
         return paper_data
     else:
         driver.back()
@@ -250,6 +249,7 @@ def next_page(page):
 
 
 if __name__ == '__main__':
+    depth = 0
     search_query = 'Blockchain'
     search_paper(search_query)
     time.sleep(5)
