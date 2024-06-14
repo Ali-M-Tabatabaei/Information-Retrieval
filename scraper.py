@@ -24,7 +24,8 @@ def search_paper(query):
 
 def get_result_papers():
     return driver.find_elements(By.CSS_SELECTOR,
-                                'xpl-results-item > div.hide-mobile > div.d-flex.result-item > div.col.result-item-align.px-3 > h3 > a')
+                                'xpl-results-item > div.hide-mobile > div.d-flex.result-item > '
+                                'div.col.result-item-align.px-3 > h3 > a')
 
 
 def has_page_number():
@@ -32,18 +33,17 @@ def has_page_number():
 
 
 def get_title():
-    try:
-        title = driver.find_element(By.CSS_SELECTOR,
-                                    "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
-                                    "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
-                                    "div.document-header-inner-container.row.g-0 > div > div > "
-                                    "div.row.g-0.document-title-fix > div > div.left-container.w-100 > h1 > span")
-    except NoSuchElementException:
-        title = driver.find_element(By.CSS_SELECTOR, "xpl-courses > div > xpl-courses-details > div > "
-                                                     "div.header--course-details.row.g-0.global-margins > "
-                                                     "div.col.header--course-details__title-icon-container.u-flex"
-                                                     "-display-flex.u-flex-align-items-center > "
-                                                     "div.col.header--course-details__title-container > h2")
+    title = driver.find_element(By.CSS_SELECTOR,
+                                "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
+                                "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
+                                "div.document-header-inner-container.row.g-0 > div > div > "
+                                "div.row.g-0.document-title-fix > div > div.left-container.w-100 > h1 > span")
+    # except NoSuchElementException:
+    #     title = driver.find_element(By.CSS_SELECTOR, "xpl-courses > div > xpl-courses-details > div > "
+    #                                                  "div.header--course-details.row.g-0.global-margins > "
+    #                                                  "div.col.header--course-details__title-icon-container.u-flex"
+    #                                                  "-display-flex.u-flex-align-items-center > "
+    #                                                  "div.col.header--course-details__title-container > h2")
     return title.text
 
 
@@ -83,26 +83,38 @@ def get_cites_patents():
 
 
 def get_full_text_views():
-    try:
-        views = driver.find_element(By.CSS_SELECTOR,
-                                    "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
-                                    "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
-                                    "div.document-header-inner-container.row.g-0 > div > div > "
-                                    "div.document-main-subheader > "
-                                    "div.document-header-metrics-banner.d-flex.flex-wrap > "
-                                    "div.document-banner.col.stats-document-banner > "
-                                    "div.document-banner-metric-container.d-flex > button:nth-child(3) > "
-                                    "div.document-banner-metric-count").text
-    except NoSuchElementException:
-        views = driver.find_element(By.CSS_SELECTOR,
-                                    "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
-                                    "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
-                                    "div.document-header-inner-container.row.g-0 > div > div > "
-                                    "div.document-main-subheader > "
-                                    "div.document-header-metrics-banner.d-flex.flex-wrap > "
-                                    "div.document-banner.col.stats-document-banner > "
-                                    "div.document-banner-metric-container.d-flex > button:nth-child(2) > "
-                                    "div.document-banner-metric-count").text
+    views = 0
+    buttons = driver.find_elements(By.CSS_SELECTOR,
+                                  "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
+                                  "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
+                                  "div.document-header-inner-container.row.g-0 > div > div > "
+                                  "div.document-main-subheader > "
+                                  "div.document-header-metrics-banner.d-flex.flex-wrap > "
+                                  "div.document-banner.col.stats-document-banner > "
+                                  "div.document-banner-metric-container.d-flex > button")
+    for button in buttons:
+        if button.text.__contains__("Views"):
+            views = int(button.text.split('\n')[0])
+    # try:
+    #     views = driver.find_element(By.CSS_SELECTOR,
+    #                                 "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
+    #                                 "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
+    #                                 "div.document-header-inner-container.row.g-0 > div > div > "
+    #                                 "div.document-main-subheader > "
+    #                                 "div.document-header-metrics-banner.d-flex.flex-wrap > "
+    #                                 "div.document-banner.col.stats-document-banner > "
+    #                                 "div.document-banner-metric-container.d-flex > button:nth-child(3) > "
+    #                                 "div.document-banner-metric-count").text
+    # except NoSuchElementException:
+    #     views = driver.find_element(By.CSS_SELECTOR,
+    #                                 "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
+    #                                 "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
+    #                                 "div.document-header-inner-container.row.g-0 > div > div > "
+    #                                 "div.document-main-subheader > "
+    #                                 "div.document-header-metrics-banner.d-flex.flex-wrap > "
+    #                                 "div.document-banner.col.stats-document-banner > "
+    #                                 "div.document-banner-metric-container.d-flex > button:nth-child(2) > "
+    #                                 "div.document-banner-metric-count").text
     return int(views)
 
 
@@ -193,28 +205,41 @@ def get_author_keywords():
     return result
 
 
+def determine_type():
+    if driver.current_url.__contains__("courses"):
+        return "Course"
+    else:
+        return "Conference Paper"
+
+
 def save_paper(paper):
     paper.click()
     time.sleep(2)
-    paper_data = {
-        "Title": get_title(),
-        "Pages": None,
-        "Cites in Papers": get_cites_papers(),
-        "Cites in Patents": get_cites_patents(),
-        "Full Text Views": get_full_text_views(),
-        "Publisher": get_publisher(),
-        "DOI": get_doi(),
-        "Date of Publication": get_publication_date(),
-        "abstract": get_abstract(),
-        "Published in": get_published_in(),
-        "Authors": get_authors(),
-        "IEEE keywords": get_ieee_keywords(),
-        "Author Keywords": get_author_keywords()
-    }
-    driver.back()
-    driver.back()
-    driver.back()
-    return paper_data
+    type = determine_type()
+    paper_data = None
+    if type == "Conference Paper":
+        paper_data = {
+            "Title": get_title(),
+            "Pages": None,
+            "Cites in Papers": get_cites_papers(),
+            "Cites in Patents": get_cites_patents(),
+            "Full Text Views": get_full_text_views(),
+            "Publisher": get_publisher(),
+            "DOI": get_doi(),
+            "Date of Publication": get_publication_date(),
+            "abstract": get_abstract(),
+            "Published in": get_published_in(),
+            "Authors": get_authors(),
+            "IEEE keywords": get_ieee_keywords(),
+            "Author Keywords": get_author_keywords()
+        }
+        driver.back()
+        driver.back()
+        driver.back()
+        return paper_data
+    else:
+        driver.back()
+        return paper_data
 
 
 def next_page():
