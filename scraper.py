@@ -1,4 +1,6 @@
 # selenium 4
+import json
+
 from selenium import webdriver
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.keys import Keys
@@ -6,7 +8,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 import time
-
 
 global depth
 
@@ -214,6 +215,7 @@ def determine_type():
 
 
 def save_paper(paper):
+    global depth
     paper.click()
     time.sleep(2)
     type = determine_type()
@@ -236,6 +238,7 @@ def save_paper(paper):
         }
         for i in range(0, depth + 1):
             driver.back()
+        depth = 0
         return paper_data
     else:
         driver.back()
@@ -248,20 +251,38 @@ def next_page(page):
     time.sleep(1)
 
 
-if __name__ == '__main__':
+def scrape(sort_type):
+    id = 0
+    global depth
     depth = 0
-    search_query = 'Blockchain'
-    search_paper(search_query)
-    time.sleep(5)
     for page in range(0, 5):
-        time.sleep(5)
+        time.sleep(3)
         print("currently on page ", page + 1)
         papers = get_result_papers()
         print(papers)
         for paper in papers:
             data = save_paper(paper)
-            print(data)
-            time.sleep(3)
-        print(driver.current_url)
+            if not data is None:
+                json_data = json.dumps(data)
+                with open(f"data/{sort_type}_{id}.json", "w") as outfile:
+                    outfile.write(json_data)
+                id += 1
+            time.sleep(2)
         next_page(page)
+
+
+if __name__ == '__main__':
+    search_query = 'Blockchain'
+    search_paper(search_query)
+    time.sleep(5)
+
+    scrape("Relevance")
+    drop_down = driver.find_element(By.CSS_SELECTOR, "#dropdownLabel-1718386301288-1")
+    drop_down.click()
+    newest_button = driver.find_element(By.CSS_SELECTOR, "#xplMainContent > div.ng-SearchResults.row.g-0 > div.col > "
+                                                         "xpl-results-list > div.results-actions.hide-mobile > "
+                                                         "xpl-select-dropdown > div > div > button:nth-child(2)")
+    newest_button.click()
+    time.sleep(1)
+    scrape("Newest")
     driver.quit()
