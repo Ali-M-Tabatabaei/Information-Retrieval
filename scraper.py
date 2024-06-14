@@ -1,5 +1,6 @@
 # selenium 4
 from selenium import webdriver
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -22,7 +23,8 @@ def search_paper(query):
 
 
 def get_result_papers():
-    return driver.find_elements(By.CSS_SELECTOR, 'xpl-results-item > div.hide-mobile > div.d-flex.result-item > div.col.result-item-align.px-3 > h3 > a')
+    return driver.find_elements(By.CSS_SELECTOR,
+                                'xpl-results-item > div.hide-mobile > div.d-flex.result-item > div.col.result-item-align.px-3 > h3 > a')
 
 
 def has_page_number():
@@ -30,30 +32,85 @@ def has_page_number():
 
 
 def get_title():
-    title = driver.find_element(By.CSS_SELECTOR, "xpl-document-details > div > div.document-main.global-content-width-w-rr > section.document-main-header.row.g-0 > div > xpl-document-header > section > div.document-header-inner-container.row.g-0 > div > div > div.row.g-0.document-title-fix > div > div.left-container.w-100 > h1 > span")
+    title = driver.find_element(By.CSS_SELECTOR,
+                                "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
+                                "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
+                                "div.document-header-inner-container.row.g-0 > div > div > "
+                                "div.row.g-0.document-title-fix > div > div.left-container.w-100 > h1 > span")
     return title.text
 
+
 def get_cites_papers():
-    num_cites = driver.find_element(By.CSS_SELECTOR, "xpl-document-details > div > div.document-main.global-content-width-w-rr > section.document-main-header.row.g-0 > div > xpl-document-header > section > div.document-header-inner-container.row.g-0 > div > div > div.document-main-subheader > div.document-header-metrics-banner.d-flex.flex-wrap > div.document-banner.col.stats-document-banner > div.document-banner-metric-container.d-flex > button:nth-child(1) > div.document-banner-metric-count").text
+    num_cites = driver.find_element(By.CSS_SELECTOR,
+                                    "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
+                                    "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
+                                    "div.document-header-inner-container.row.g-0 > div > div > "
+                                    "div.document-main-subheader > "
+                                    "div.document-header-metrics-banner.d-flex.flex-wrap > "
+                                    "div.document-banner.col.stats-document-banner > "
+                                    "div.document-banner-metric-container.d-flex > button:nth-child(1) > "
+                                    "div.document-banner-metric-count").text
     return int(num_cites)
 
 
+# returns zero if the paper has no cites in patent
 def get_cites_patents():
-    num_cites = driver.find_element(By.CSS_SELECTOR, "xpl-document-details > div > div.document-main.global-content-width-w-rr > section.document-main-header.row.g-0 > div > xpl-document-header > section > div.document-header-inner-container.row.g-0 > div > div > div.document-main-subheader > div.document-header-metrics-banner.d-flex.flex-wrap > div.document-banner.col.stats-document-banner > div.document-banner-metric-container.d-flex > button:nth-child(2) > div.document-banner-metric-count").text
+    num_cites = 0
+    if len(driver.find_elements(By.CSS_SELECTOR,
+                                "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
+                                "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
+                                "div.document-header-inner-container.row.g-0 > div > div > "
+                                "div.document-main-subheader > div.document-header-metrics-banner.d-flex.flex-wrap > "
+                                "div.document-banner.col.stats-document-banner > "
+                                "div.document-banner-metric-container.d-flex > button:nth-child(2) > div")) > 2:
+        num_cites = driver.find_element(By.CSS_SELECTOR,
+                                        "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
+                                        "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
+                                        "div.document-header-inner-container.row.g-0 > div > div > "
+                                        "div.document-main-subheader > "
+                                        "div.document-header-metrics-banner.d-flex.flex-wrap > "
+                                        "div.document-banner.col.stats-document-banner > "
+                                        "div.document-banner-metric-container.d-flex > button:nth-child(2) > "
+                                        "div.document-banner-metric-count").text
     return int(num_cites)
+
+
+def get_full_text_views():
+    try:
+        views = driver.find_element(By.CSS_SELECTOR,
+                                    "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
+                                    "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
+                                    "div.document-header-inner-container.row.g-0 > div > div > "
+                                    "div.document-main-subheader > "
+                                    "div.document-header-metrics-banner.d-flex.flex-wrap > "
+                                    "div.document-banner.col.stats-document-banner > "
+                                    "div.document-banner-metric-container.d-flex > button:nth-child(3) > "
+                                    "div.document-banner-metric-count").text
+    except NoSuchElementException:
+        views = driver.find_element(By.CSS_SELECTOR,
+                                    "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
+                                    "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
+                                    "div.document-header-inner-container.row.g-0 > div > div > "
+                                    "div.document-main-subheader > "
+                                    "div.document-header-metrics-banner.d-flex.flex-wrap > "
+                                    "div.document-banner.col.stats-document-banner > "
+                                    "div.document-banner-metric-container.d-flex > button:nth-child(2) > "
+                                    "div.document-banner-metric-count").text
+    return int(views)
+
 
 def save_paper(paper):
     paper.click()
     time.sleep(1)
     paper_data = {
-        "title": get_title(),
-        "pages": None,
+        "Title": get_title(),
+        "Pages": None,
         "Cites in Papers": get_cites_papers(),
         "Cites in Patents": get_cites_patents(),
+        "Full Text Views": get_full_text_views(),
 
     }
     return paper_data
-
 
 
 def next_page():
@@ -62,7 +119,7 @@ def next_page():
 
 if __name__ == '__main__':
     search_paper('Blockchain')
-    time.sleep(1)
+    time.sleep(2)
     # for page in range(0, 5):
     papers = get_result_papers()
     print(papers)
