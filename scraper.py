@@ -99,6 +99,32 @@ def get_full_text_views():
     return int(views)
 
 
+def get_publisher():
+    publisher = driver.find_element(By.CSS_SELECTOR, "xpl-document-details > div > "
+                                                     "div.document-main.global-content-width-w-rr > div > "
+                                                     "div.document-main-content-container.col-19-24 > section > "
+                                                     "div.document-main-left-trail-content > div > "
+                                                     "xpl-document-abstract > section > "
+                                                     "div.abstract-desktop-div.hide-mobile.text-base-md-lh > "
+                                                     "div.row.g-0.u-pt-1 > div:nth-child(2) > "
+                                                     "div.u-pb-1.doc-abstract-publisher > xpl-publisher > span > span "
+                                                     "> span > span:nth-child(2)").text
+    return publisher
+
+
+def get_doi():
+    doi = driver.find_element(By.CSS_SELECTOR, "xpl-document-details > div > "
+                                               "div.document-main.global-content-width-w-rr > div > "
+                                               "div.document-main-content-container.col-19-24 > section > "
+                                               "div.document-main-left-trail-content > div > xpl-document-abstract > "
+                                               "section > div.abstract-desktop-div.hide-mobile.text-base-md-lh > "
+                                               "div.row.g-0.u-pt-1 > div:nth-child(2) > "
+                                               "div.u-pb-1.stats-document-abstract-doi > a").text
+    return doi
+
+
+#
+
 def save_paper(paper):
     paper.click()
     time.sleep(1)
@@ -108,6 +134,8 @@ def save_paper(paper):
         "Cites in Papers": get_cites_papers(),
         "Cites in Patents": get_cites_patents(),
         "Full Text Views": get_full_text_views(),
+        "Publisher": get_publisher(),
+        "DOI": get_doi(),
 
     }
     return paper_data
