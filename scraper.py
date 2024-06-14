@@ -124,8 +124,46 @@ def get_doi():
 
 
 def get_publication_date():
-    publication_date = driver.find_element(By.CSS_SELECTOR, '#xplMainContentLandmark > div > xpl-document-details > div > div.document-main.global-content-width-w-rr > div > div.document-main-content-container.col-19-24 > section > div.document-main-left-trail-content > div > xpl-document-abstract > section > div.abstract-desktop-div.hide-mobile.text-base-md-lh > div.row.g-0.u-pt-1 > div:nth-child(1) > div.u-pb-1.doc-abstract-confdate').text
+    publication_date = driver.find_element(By.CSS_SELECTOR, 'xpl-document-details > '
+                                                            'div > div.document-main.global-content-width-w-rr > div '
+                                                            '> div.document-main-content-container.col-19-24 > '
+                                                            'section > div.document-main-left-trail-content > div > '
+                                                            'xpl-document-abstract > section > '
+                                                            'div.abstract-desktop-div.hide-mobile.text-base-md-lh > '
+                                                            'div.row.g-0.u-pt-1 > div:nth-child(1) > '
+                                                            'div.u-pb-1.doc-abstract-confdate').text
     return publication_date.split(': ')[1]
+
+
+def get_abstract():
+    return driver.find_element(By.CSS_SELECTOR, "xpl-document-details > div > "
+                                                "div.document-main.global-content-width-w-rr > div > "
+                                                "div.document-main-content-container.col-19-24 > section > "
+                                                "div.document-main-left-trail-content > div > xpl-document-abstract > "
+                                                "section > div.abstract-desktop-div.hide-mobile.text-base-md-lh > "
+                                                "div.abstract-text.row.g-0 > div > div > div").text
+
+
+def get_published_in():
+    publishers_element = driver.find_elements(By.CSS_SELECTOR,
+                                              "xpl-document-details > div > "
+                                              "div.document-main.global-content-width-w-rr > div > "
+                                              "div.document-main-content-container.col-19-24 > section > "
+                                              "div.document-main-left-trail-content > div > xpl-document-abstract > "
+                                              "section > div.abstract-desktop-div.hide-mobile.text-base-md-lh > "
+                                              "div.u-pb-1.stats-document-abstract-publishedIn > a")
+    result = [{"name": publisher.text, "link": publisher.get_attribute('href')} for publisher in publishers_element]
+    return result
+
+
+def get_authors():
+    arrow_down = driver.find_element(By.CSS_SELECTOR, "#authors-header > div > i")
+    arrow_down.click()
+    time.sleep(1)
+    authors_data = driver.find_elements(By.CSS_SELECTOR, "#authors > div")
+    result = [{"name": author.text.split('\n')[0], "from": author.text.split('\n')[1]} for author in authors_data]
+    # print(authors_data.pop().text)
+    return result
 
 
 def save_paper(paper):
@@ -140,6 +178,9 @@ def save_paper(paper):
         "Publisher": get_publisher(),
         "DOI": get_doi(),
         "Date of Publication": get_publication_date(),
+        "abstract": get_abstract(),
+        "Published in": get_published_in(),
+        "Authors": get_authors(),
 
     }
     return paper_data
