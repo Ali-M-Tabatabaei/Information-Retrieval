@@ -85,36 +85,16 @@ def get_cites_patents():
 def get_full_text_views():
     views = 0
     buttons = driver.find_elements(By.CSS_SELECTOR,
-                                  "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
-                                  "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
-                                  "div.document-header-inner-container.row.g-0 > div > div > "
-                                  "div.document-main-subheader > "
-                                  "div.document-header-metrics-banner.d-flex.flex-wrap > "
-                                  "div.document-banner.col.stats-document-banner > "
-                                  "div.document-banner-metric-container.d-flex > button")
+                                   "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
+                                   "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
+                                   "div.document-header-inner-container.row.g-0 > div > div > "
+                                   "div.document-main-subheader > "
+                                   "div.document-header-metrics-banner.d-flex.flex-wrap > "
+                                   "div.document-banner.col.stats-document-banner > "
+                                   "div.document-banner-metric-container.d-flex > button")
     for button in buttons:
         if button.text.__contains__("Views"):
             views = int(button.text.split('\n')[0])
-    # try:
-    #     views = driver.find_element(By.CSS_SELECTOR,
-    #                                 "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
-    #                                 "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
-    #                                 "div.document-header-inner-container.row.g-0 > div > div > "
-    #                                 "div.document-main-subheader > "
-    #                                 "div.document-header-metrics-banner.d-flex.flex-wrap > "
-    #                                 "div.document-banner.col.stats-document-banner > "
-    #                                 "div.document-banner-metric-container.d-flex > button:nth-child(3) > "
-    #                                 "div.document-banner-metric-count").text
-    # except NoSuchElementException:
-    #     views = driver.find_element(By.CSS_SELECTOR,
-    #                                 "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
-    #                                 "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
-    #                                 "div.document-header-inner-container.row.g-0 > div > div > "
-    #                                 "div.document-main-subheader > "
-    #                                 "div.document-header-metrics-banner.d-flex.flex-wrap > "
-    #                                 "div.document-banner.col.stats-document-banner > "
-    #                                 "div.document-banner-metric-container.d-flex > button:nth-child(2) > "
-    #                                 "div.document-banner-metric-count").text
     return int(views)
 
 
@@ -142,15 +122,28 @@ def get_doi():
     return doi
 
 
+# "#xplMainContentLandmark > div > xpl-document-details > div > div.document-main.global-content-width-w-rr > div > div.document-main-content-container.col-19-24 > section > div.document-main-left-trail-content > div > xpl-document-abstract > section > div.abstract-desktop-div.hide-mobile.text-base-md-lh > div.row.g-0.u-pt-1 > div:nth-child(1) > div.u-pb-1.doc-abstract-pubdate"
 def get_publication_date():
-    publication_date = driver.find_element(By.CSS_SELECTOR, 'xpl-document-details > '
-                                                            'div > div.document-main.global-content-width-w-rr > div '
-                                                            '> div.document-main-content-container.col-19-24 > '
-                                                            'section > div.document-main-left-trail-content > div > '
-                                                            'xpl-document-abstract > section > '
-                                                            'div.abstract-desktop-div.hide-mobile.text-base-md-lh > '
-                                                            'div.row.g-0.u-pt-1 > div:nth-child(1) > '
-                                                            'div.u-pb-1.doc-abstract-confdate').text
+    try:
+        publication_date = driver.find_element(By.CSS_SELECTOR, 'xpl-document-details > '
+                                                                'div > div.document-main.global-content-width-w-rr > div '
+                                                                '> div.document-main-content-container.col-19-24 > '
+                                                                'section > div.document-main-left-trail-content > div > '
+                                                                'xpl-document-abstract > section > '
+                                                                'div.abstract-desktop-div.hide-mobile.text-base-md-lh > '
+                                                                'div.row.g-0.u-pt-1 > div:nth-child(1) > '
+                                                                'div.u-pb-1.doc-abstract-confdate').text
+    except NoSuchElementException:
+        publication_date = driver.find_element(By.CSS_SELECTOR, 'xpl-document-details '
+                                                                '> div > div.document-main.global-content-width-w-rr '
+                                                                '> div > '
+                                                                'div.document-main-content-container.col-19-24 > '
+                                                                'section > div.document-main-left-trail-content > div '
+                                                                '> xpl-document-abstract > section > '
+                                                                'div.abstract-desktop-div.hide-mobile.text-base-md-lh '
+                                                                '> div.row.g-0.u-pt-1 > div:nth-child(1) > '
+                                                                'div.u-pb-1.doc-abstract-pubdate').text
+
     return publication_date.split(': ')[1]
 
 
@@ -200,16 +193,17 @@ def get_author_keywords():
     # arrow_down.click()
     # time.sleep(1)
     keywords_data = driver.find_elements(By.CSS_SELECTOR,
-                                         "#keywords > xpl-document-keyword-list > section > div > ul > li:nth-child(3) > ul > li > a")
+                                         "#keywords > xpl-document-keyword-list > section > div > ul > li:nth-child("
+                                         "3) > ul > li > a")
     result = [keyword.text for keyword in keywords_data]
     return result
 
 
 def determine_type():
-    if driver.current_url.__contains__("courses"):
-        return "Course"
-    else:
+    if driver.current_url.__contains__("document"):
         return "Conference Paper"
+    else:
+        return "irrelevant"
 
 
 def save_paper(paper):
@@ -242,20 +236,26 @@ def save_paper(paper):
         return paper_data
 
 
-def next_page():
-    return
+def next_page(page):
+    button = driver.find_element(By.CLASS_NAME, f"stats-Pagination_{str(page + 2)}")
+    button.click()
+    time.sleep(1)
 
 
 if __name__ == '__main__':
     search_query = 'Blockchain'
     search_paper(search_query)
     time.sleep(5)
-    # for page in range(0, 5):
-    papers = get_result_papers()
-    print(papers)
-    for paper in papers:
-        data = save_paper(paper)
-        print(data)
-        time.sleep(3)
+    for page in range(0, 5):
+        time.sleep(5)
+        print("currently on page ", page + 1)
+        papers = get_result_papers()
+        print(papers)
+        for paper in papers:
+            data = save_paper(paper)
+            print(data)
+            time.sleep(3)
+        print(driver.current_url)
+        next_page(page)
 
     driver.quit()
