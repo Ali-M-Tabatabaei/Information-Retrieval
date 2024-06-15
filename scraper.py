@@ -46,16 +46,19 @@ def get_title():
 
 
 def get_cites_papers():
-    num_cites = driver.find_element(By.CSS_SELECTOR,
-                                    "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
-                                    "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
-                                    "div.document-header-inner-container.row.g-0 > div > div > "
-                                    "div.document-main-subheader > "
-                                    "div.document-header-metrics-banner.d-flex.flex-wrap > "
-                                    "div.document-banner.col.stats-document-banner > "
-                                    "div.document-banner-metric-container.d-flex > button:nth-child(1) > "
-                                    "div.document-banner-metric-count").text
-    return int(num_cites)
+    cites = 0
+    buttons = driver.find_elements(By.CSS_SELECTOR,
+                                   "xpl-document-details > div > div.document-main.global-content-width-w-rr > "
+                                   "section.document-main-header.row.g-0 > div > xpl-document-header > section > "
+                                   "div.document-header-inner-container.row.g-0 > div > div > "
+                                   "div.document-main-subheader > "
+                                   "div.document-header-metrics-banner.d-flex.flex-wrap > "
+                                   "div.document-banner.col.stats-document-banner > "
+                                   "div.document-banner-metric-container.d-flex > button")
+    for button in buttons:
+        if button.text.__contains__("Papers"):
+            cites = int(button.text.split('\n')[0])
+    return int(cites)
 
 
 # returns zero if the paper has no cites in patent
@@ -175,8 +178,20 @@ def get_authors():
         arrow_down.click()
         time.sleep(1)
         authors_data = driver.find_elements(By.CSS_SELECTOR, "#authors > div")
-        result = [{"name": author.text.split('\n')[0], "from": author.text.split('\n')[1]} for author in authors_data]
-        # print(authors_data.pop().text)
+        result = []
+        for author in authors_data:
+            author_text = author.text.split('\n')
+            if author_text:
+                author_info = {
+                    "name": author_text[0],
+                    "from": author_text[1]
+                }
+            else:
+                author_info = {
+                    "name": author.text,
+                    "from": None
+                }
+            result.append(author_info)
         depth += 1
         return result
     except NoSuchElementException:
@@ -256,7 +271,7 @@ def scrape(sort_type):
     global depth
     depth = 0
     for page in range(0, 5):
-        time.sleep(3)
+        # time.sleep(3)
         print("currently on page ", page + 1)
         papers = get_result_papers()
         print(papers)
@@ -266,8 +281,9 @@ def scrape(sort_type):
                 json_data = json.dumps(data)
                 with open(f"data/{sort_type}_{id}.json", "w") as outfile:
                     outfile.write(json_data)
+                    print(f"data/{sort_type}_{id}.json")
                 id += 1
-            time.sleep(2)
+            time.sleep(3)
         next_page(page)
 
 
@@ -276,13 +292,11 @@ if __name__ == '__main__':
     search_paper(search_query)
     time.sleep(5)
 
-    scrape("Relevance")
-    drop_down = driver.find_element(By.CSS_SELECTOR, "#dropdownLabel-1718386301288-1")
+    # scrape("Relevance")
+    drop_down = driver.find_element(By.CSS_SELECTOR, "#xplMainContent > div.ng-SearchResults.row.g-0 > div.col > xpl-results-list > div.results-actions.hide-mobile > xpl-select-dropdown")
     drop_down.click()
-    newest_button = driver.find_element(By.CSS_SELECTOR, "#xplMainContent > div.ng-SearchResults.row.g-0 > div.col > "
-                                                         "xpl-results-list > div.results-actions.hide-mobile > "
-                                                         "xpl-select-dropdown > div > div > button:nth-child(2)")
+    newest_button = driver.find_element(By.CSS_SELECTOR, "#xplMainContent > div.ng-SearchResults.row.g-0 > div.col > xpl-results-list > div.results-actions.hide-mobile > xpl-select-dropdown > div > div > button:nth-child(2)")
     newest_button.click()
-    time.sleep(1)
+    time.sleep(2)
     scrape("Newest")
     driver.quit()
