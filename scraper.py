@@ -32,8 +32,21 @@ def get_result_papers():
                                 'div.col.result-item-align.px-3 > h3 > a')
 
 
-def has_page_number():
-    return False
+def get_page():
+    try:
+        fields = driver.find_elements(By.CSS_SELECTOR, "xpl-document-details > div > "
+                                                       "div.document-main.global-content-width-w-rr > div > "
+                                                       "div.document-main-content-container.col-19-24 > section > "
+                                                       "div.document-main-left-trail-content > div > "
+                                                       "xpl-document-abstract > section > "
+                                                       "div.abstract-desktop-div.hide-mobile.text-base-md-lh > "
+                                                       "div.row.g-0.u-pt-1 > div:nth-child(1) > div")
+        for field in fields:
+            if field.text.__contains__("Page"):
+                return field.text.split(": ")[1]
+        return None
+    except NoSuchElementException:
+        return None
 
 
 def get_title():
@@ -238,7 +251,7 @@ def save_paper(paper):
     if type == "Conference Paper":
         paper_data = {
             "Title": get_title(),
-            "Pages": None,
+            "Pages": get_page(),
             "Cites in Papers": get_cites_papers(),
             "Cites in Patents": get_cites_patents(),
             "Full Text Views": get_full_text_views(),
