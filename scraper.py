@@ -181,7 +181,7 @@ def get_authors():
         result = []
         for author in authors_data:
             author_text = author.text.split('\n')
-            if author_text:
+            if len(author_text) > 1:
                 author_info = {
                     "name": author_text[0],
                     "from": author_text[1]
@@ -271,11 +271,12 @@ def scrape(sort_type):
     global depth
     depth = 0
     for page in range(0, 5):
-        # time.sleep(3)
+        time.sleep(3)
         print("currently on page ", page + 1)
         papers = get_result_papers()
         print(papers)
         for paper in papers:
+            time.sleep(2)
             data = save_paper(paper)
             if not data is None:
                 json_data = json.dumps(data)
@@ -283,7 +284,7 @@ def scrape(sort_type):
                     outfile.write(json_data)
                     print(f"data/{sort_type}_{id}.json")
                 id += 1
-            time.sleep(3)
+            time.sleep(2)
         next_page(page)
 
 
@@ -291,11 +292,14 @@ if __name__ == '__main__':
     search_query = 'Blockchain'
     search_paper(search_query)
     time.sleep(5)
-
     # scrape("Relevance")
-    drop_down = driver.find_element(By.CSS_SELECTOR, "#xplMainContent > div.ng-SearchResults.row.g-0 > div.col > xpl-results-list > div.results-actions.hide-mobile > xpl-select-dropdown")
+    drop_down = driver.find_element(By.CSS_SELECTOR, "#xplMainContent > div.ng-SearchResults.row.g-0 > div.col > "
+                                                     "xpl-results-list > div.results-actions.hide-mobile > "
+                                                     "xpl-select-dropdown")
     drop_down.click()
-    newest_button = driver.find_element(By.CSS_SELECTOR, "#xplMainContent > div.ng-SearchResults.row.g-0 > div.col > xpl-results-list > div.results-actions.hide-mobile > xpl-select-dropdown > div > div > button:nth-child(2)")
+    newest_button = driver.find_element(By.CSS_SELECTOR, "#xplMainContent > div.ng-SearchResults.row.g-0 > div.col > "
+                                                         "xpl-results-list > div.results-actions.hide-mobile > "
+                                                         "xpl-select-dropdown > div > div > button:nth-child(2)")
     newest_button.click()
     time.sleep(2)
     scrape("Newest")
