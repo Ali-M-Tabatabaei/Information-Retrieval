@@ -8,7 +8,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 import time
-
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 global depth
 
 option = webdriver.ChromeOptions()
@@ -150,15 +151,20 @@ def get_publication_date():
                                                                 'div.row.g-0.u-pt-1 > div:nth-child(1) > '
                                                                 'div.u-pb-1.doc-abstract-confdate').text
     except NoSuchElementException:
-        publication_date = driver.find_element(By.CSS_SELECTOR, 'xpl-document-details '
-                                                                '> div > div.document-main.global-content-width-w-rr '
-                                                                '> div > '
-                                                                'div.document-main-content-container.col-19-24 > '
-                                                                'section > div.document-main-left-trail-content > div '
-                                                                '> xpl-document-abstract > section > '
-                                                                'div.abstract-desktop-div.hide-mobile.text-base-md-lh '
-                                                                '> div.row.g-0.u-pt-1 > div:nth-child(1) > '
-                                                                'div.u-pb-1.doc-abstract-pubdate').text
+        try:
+
+            publication_date = driver.find_element(By.CSS_SELECTOR, 'xpl-document-details '
+                                                                    '> div > div.document-main.global-content-width-w-rr '
+                                                                    '> div > '
+                                                                    'div.document-main-content-container.col-19-24 > '
+                                                                    'section > div.document-main-left-trail-content > '
+                                                                    'div'
+                                                                    '> xpl-document-abstract > section > '
+                                                                    'div.abstract-desktop-div.hide-mobile.text-base-md-lh '
+                                                                    '> div.row.g-0.u-pt-1 > div:nth-child(1) > '
+                                                                    'div.u-pb-1.doc-abstract-pubdate').text
+        except NoSuchElementException:
+            return None
 
     return publication_date.split(': ')[1]
 
@@ -187,6 +193,7 @@ def get_published_in():
 def get_authors():
     global depth
     try:
+        
         arrow_down = driver.find_element(By.CSS_SELECTOR, "#authors-header > div > i")
         arrow_down.click()
         time.sleep(1)
@@ -212,27 +219,33 @@ def get_authors():
 
 
 def get_ieee_keywords():
-    global depth
-    arrow_down = driver.find_element(By.CSS_SELECTOR, "#keywords-header > div > i")
-    arrow_down.click()
-    time.sleep(1)
-    keywords_data = driver.find_elements(By.CSS_SELECTOR,
-                                         "#keywords > xpl-document-keyword-list > section > div > ul > li:nth-child("
-                                         "1) > ul > li > a")
-    result = [keyword.text for keyword in keywords_data]
-    depth += 1
-    return result
+    try:
+        global depth
+        arrow_down = driver.find_element(By.CSS_SELECTOR, "#keywords-header > div > i")
+        arrow_down.click()
+        time.sleep(1)
+        keywords_data = driver.find_elements(By.CSS_SELECTOR,
+                                             "#keywords > xpl-document-keyword-list > section > div > ul > li:nth-child("
+                                             "1) > ul > li > a")
+        result = [keyword.text for keyword in keywords_data]
+        depth += 1
+        return result
+    except NoSuchElementException:
+        return None
 
 
 def get_author_keywords():
     # arrow_down = driver.find_element(By.CSS_SELECTOR, "#keywords-header > div > i")
     # arrow_down.click()
     # time.sleep(1)
-    keywords_data = driver.find_elements(By.CSS_SELECTOR,
-                                         "#keywords > xpl-document-keyword-list > section > div > ul > li:nth-child("
-                                         "3) > ul > li > a")
-    result = [keyword.text for keyword in keywords_data]
-    return result
+    try:
+        keywords_data = driver.find_elements(By.CSS_SELECTOR,
+                                             "#keywords > xpl-document-keyword-list > section > div > ul > li:nth-child("
+                                             "3) > ul > li > a")
+        result = [keyword.text for keyword in keywords_data]
+        return result
+    except NoSuchElementException:
+        return None
 
 
 def determine_type():
@@ -284,7 +297,7 @@ def scrape(sort_type):
     global depth
     depth = 0
     for page in range(0, 5):
-        time.sleep(3)
+        time.sleep(5)
         print("currently on page ", page + 1)
         papers = get_result_papers()
         print(papers)
