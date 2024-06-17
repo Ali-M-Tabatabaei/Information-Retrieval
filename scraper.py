@@ -318,7 +318,7 @@ if __name__ == '__main__':
     search_query = 'Blockchain'
     search_paper(search_query)
     time.sleep(5)
-    # scrape("Relevance")
+    scrape("Relevance")
     drop_down = driver.find_element(By.CSS_SELECTOR, "#xplMainContent > div.ng-SearchResults.row.g-0 > div.col > "
                                                      "xpl-results-list > div.results-actions.hide-mobile > "
                                                      "xpl-select-dropdown")
