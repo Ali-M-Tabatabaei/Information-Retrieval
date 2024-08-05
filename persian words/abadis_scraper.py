@@ -11,28 +11,30 @@ from selenium.webdriver.support.wait import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
 # Configuration
-num_threads = 5
-max_depth = 2
-start_urls = ["https://abadis.ir/amid"]  # Add initial URLs here
+# num_threads = 5
+# max_depth = 2
+# start_urls = ["https://abadis.ir/amid"]  # Add initial URLs here
 
 # Setting up Selenium WebDriver
-options = webdriver.ChromeOptions()
+# options = webdriver.ChromeOptions()
 # option.add_argument("start-maximized")
-options.add_experimental_option("detach", True)
+# options.add_experimental_option("detach", True)
 
-options.add_argument("--headless")
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+# options.add_argument("--headless")
+# driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
 # Queue to hold URLs
-url_queue = Queue()
+# url_queue = Queue()
 
 # Lock for print statements
-print_lock = threading.Lock()
+# print_lock = threading.Lock()
 
 
 class Scraper:
     def __init__(self):
         # Configuration
+        self.producer = None
+        self.consumer = None
         self.num_threads = 5
         self.max_depth = 2
         self.start_urls = ["https://abadis.ir/amid"]  # Add initial URLs here
@@ -43,39 +45,41 @@ class Scraper:
         self.options.add_experimental_option("detach", True)
 
         self.options.add_argument("--headless")
-        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=self.options)
+        self.driver.get("https://abadis.ir/amid")
 
         # Queue to hold URLs
         self.url_queue = Queue()
-
         # Lock for print statements
         self.print_lock = threading.Lock()
 
     # Producer thread
     class Producer(threading.Thread):
-        def __init__(self, urls):
+        def __init__(self, urls, scraper_instance):
             threading.Thread.__init__(self)
             self.urls = urls
+            self.scraper = scraper_instance
 
         def run(self):
             for url in self.urls:
-                url_queue.put((url, 0))  # (url, depth)
+                scraper.url_queue.put((url, 0))  # (url, depth)
 
     # Consumer thread
     class Consumer(threading.Thread):
-        def __init__(self):
+        def __init__(self, scraper_instance):
             threading.Thread.__init__(self)
-            self.driver = driver
+            self.scraper = scraper_instance
+            self.driver = scraper.driver
 
         def run(self):
             while True:
-                url, depth = url_queue.get()
-                if depth <= max_depth:
+                url, depth = scraper.url_queue.get()
+                if depth <= scraper.max_depth:
                     self.scrape(url, depth)
-                url_queue.task_done()
+                scraper.url_queue.task_done()
 
         def scrape(self, url, depth):
-            with print_lock:
+            with scraper.print_lock:
                 print(f"Scraping: {url} at depth: {depth}")
             self.driver.get(url)
             time.sleep(2)  # Let the page load
@@ -86,9 +90,9 @@ class Scraper:
                 for link in links:
                     href = link.get_attribute("href")
                     if href and href.startswith("http"):
-                        url_queue.put((href, depth + 1))
+                        scraper.url_queue.put((href, depth + 1))
             except Exception as e:
-                with print_lock:
+                with scraper.print_lock:
                     print(f"Error scraping {url}: {e}")
 
         def quit(self):
@@ -97,30 +101,34 @@ class Scraper:
     def get_starting_urls(self):
         urls = WebDriverWait(self.driver, 10).until(
             EC.presence_of_all_elements_located((By.CSS_SELECTOR,
-                                                 'body > main > div:nth-child(5) > div'))
+                                                 'body > main > div:nth-child(5) > div > a'))
         )
-        print(urls)
+        urls = [url.get_attribute('href') for url in urls]
+        self.producer = self.Producer(urls=urls, scraper_instance=self)
+        self.consumer = self.Consumer(scraper_instance=self)
+
+    def url_chain(self):
+        # Start producer
+        self.producer.start()
+        self.producer.join()
+        #
+        # Start consumers
+        consumers = []
+        for _ in range(self.num_threads):
+            consumer = self.consumer()
+            consumer.start()
+            consumers.append(consumer)
+
+        # Wait for the queue to be empty
+        self.url_queue.join()
+
+        # Quit all drivers
+        for consumer in consumers:
+            consumer.quit()
 
 
 # Main script
 if __name__ == "__main__":
     scraper = Scraper()
     scraper.get_starting_urls()
-    # Start producer
-    # producer = Producer(start_urls)
-    # producer.start()
-    # producer.join()
-    #
-    # # Start consumers
-    # consumers = []
-    # for _ in range(num_threads):
-    #     consumer = Consumer()
-    #     consumer.start()
-    #     consumers.append(consumer)
-    #
-    # # Wait for the queue to be empty
-    # url_queue.join()
-    #
-    # # Quit all drivers
-    # for consumer in consumers:
-    #     consumer.quit()
+
