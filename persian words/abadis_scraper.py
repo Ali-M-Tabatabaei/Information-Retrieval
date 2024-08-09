@@ -10,7 +10,7 @@ import time
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
-
+import json
 
 # Configuration
 # num_threads = 5
@@ -36,8 +36,8 @@ class Scraper:
     def __init__(self):
         # Configuration
         self.producer = None
-        self.consumer = None
-        self.num_threads = 5
+        self.consumers = []
+        self.num_threads = 1
         self.max_depth = 2
         self.start_urls = ["https://abadis.ir/amid"]  # Add initial URLs here
         self.pattern1 = r'https://abadis.ir/amid/?ch=*'  # Pattern for depth 1 URLs
@@ -47,7 +47,7 @@ class Scraper:
         # option.add_argument("start-maximized")
         self.options.add_experimental_option("detach", True)
 
-        self.options.add_argument("--headless")
+        # self.options.add_argument("--headless")
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=self.options)
         self.driver.get("https://abadis.ir/amid")
         self.scraped_data = []
@@ -85,7 +85,7 @@ class Scraper:
             with scraper.print_lock:
                 print(f"Scraping: {url} at depth: {depth}")
             self.driver.get(url)
-
+            time.sleep(2)
             # Custom scraping logic
             if depth == 1:
                 self.scrape_depth1(url)
@@ -107,23 +107,38 @@ class Scraper:
                 print(href)
 
         def scrape_depth2(self, url):
-            links = self.driver.find_elements(By.TAG_NAME, "a")
-            for link in links:
-                href = link.get_attribute("href")
-                if href and re.search(scraper.pattern2, href):
-                    data = {
-                        "depth1_url": url,
-                        "depth2_href": href,
-                        "text": link.text
-                    }
-                    with scraper.print_lock:
-                        scraper.scraped_data.append(data)
+            meaning = ""
+            #  body > main > div:nth-child(4)
+            #  body > main > div:nth-child(5) > div.boxHd
+            #  #boxWrd > h1
+            title = WebDriverWait(scraper.driver, 15).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "#boxWrd > h1"))
+            )
+            word = title.text
+            dropdowns = WebDriverWait(scraper.driver, 15).until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, "body > main > div"))
+            )
+            for dropdown in dropdowns:
+                if dropdown.text.__contains__("فرهنگ عمید") and dropdown.is_displayed():
+                    dropdown.click()
+                    time.sleep(1)
+                    text_element = dropdown.find_element(By.XPATH, ".//div[contains(@class, 'boxBd boxBdNop')][1]")
+                    meaning = text_element.text
+
+            data = {
+                "word": word,
+                "meaning": meaning,
+            }
+            print(data)
+            with scraper.print_lock:
+                scraper.scraped_data.append(data)
+
 
         def quit(self):
             self.driver.quit()
 
     def get_starting_urls(self):
-        urls = WebDriverWait(self.driver, 10).until(
+        urls = WebDriverWait(self.driver, 60).until(
             EC.presence_of_all_elements_located((By.CSS_SELECTOR,
                                                  'body > main > div:nth-child(5) > div > a'))
         )
@@ -132,21 +147,21 @@ class Scraper:
         self.consumer = self.Consumer(scraper_instance=self)
 
     def url_chain(self):
+        # Start consumers
+        for _ in range(self.num_threads):
+            consumer = self.Consumer(scraper_instance=self)
+            self.consumers.append(consumer)
+        for cons in self.consumers:
+            cons.start()
         # Start producer
         self.producer.start()
         self.producer.join()
-        #
-        # Start consumers
-        consumers = []
-        for _ in range(self.num_threads):
-            self.consumer.start()
-            consumers.append(self.consumer)
 
         # Wait for the queue to be empty
         self.url_queue.join()
 
         # Quit all drivers
-        for consumer in consumers:
+        for consumer in self.consumers:
             consumer.quit()
 
 
@@ -155,4 +170,5 @@ if __name__ == "__main__":
     scraper = Scraper()
     scraper.get_starting_urls()
     scraper.url_chain()
-    print(scraper.scraped_data)
+    with open("dictionary.json", "w") as outfile:
+        json.dump(scraper.scraped_data, outfile)
