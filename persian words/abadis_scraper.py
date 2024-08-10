@@ -208,16 +208,17 @@ class Scraper:
             consumer.quit()
 
     def url_seperator(self):
-        check = {}
-        with open('urls.txt', 'r') as f:
-            line = f.readline().strip()
-        urls = ["https://" + part for part in line.split('https://') if part]
-        for url in urls:
-            check[url] = False
-        with open('urls.json', 'w') as f:
-            f.write(json.dumps(check))
+        # check = {}
+        # with open('urls.txt', 'r') as f:
+        #     line = f.readline().strip()
+        # urls = ["https://" + part for part in line.split('https://') if part]
+        # for url in urls:
+        #     check[url] = False
+        # with open('urls.json', 'w') as f:
+        #     f.write(json.dumps(check))
         with open('urls.json', 'r') as json_file:
             self.checked_urls = json.load(json_file)
+            json_file.close()
         urls = list(self.checked_urls.keys())
         self.producer = self.Producer(urls, scraper, 2)
 
