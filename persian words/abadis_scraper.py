@@ -2,7 +2,7 @@ import re
 import threading
 from queue import Queue
 
-import selenium.common.exceptions
+from selenium.common.exceptions import  ElementClickInterceptedException
 from selenium import webdriver
 from selenium.common import TimeoutException
 from selenium.webdriver.chrome.service import Service
@@ -17,8 +17,10 @@ import json
 
 
 class Scraper:
-    def __init__(self, file):
+    def __init__(self, file ,output):
         # Configuration
+        self.output = output
+        self.checked_urls = None
         self.file = file
         self.producer = None
         self.consumers = []
@@ -68,17 +70,24 @@ class Scraper:
                 scraper.url_queue.task_done()
 
         def scrape(self, url, depth):
-            with scraper.print_lock:
-                print(f"Scraping: {url} at depth: {depth}")
-            self.driver.get(url)
-            # time.sleep(2)
-            # Custom scraping logic
-            if depth == 1:
-                self.scrape_depth1(url)
-            elif depth == 2:
-                self.scrape_depth2(url)
-            else:
-                pass
+            try:
+                with scraper.print_lock:
+                    print(f"Scraping: {url} at depth: {depth}")
+                if not scraper.checked_urls[url]:
+                    self.driver.get(url)
+                # time.sleep(2)
+                # Custom scraping logic
+                    if depth == 1:
+                        self.scrape_depth1(url)
+                    elif depth == 2:
+                        self.scrape_depth2(url)
+                    else:
+                        pass
+            except:
+                with open('urls.json', 'w') as f:
+                    f.write(json.dumps(scraper.checked_urls))
+                    f.close()
+                exit()
 
         def scrape_depth1(self, url):
             # body > main > div.boxBd > div.boxLi > a
@@ -92,8 +101,8 @@ class Scraper:
                     scraper.url_queue.put((href, 2))
                     print(href)
                     scraper.file.write(href)
-            page_number = 2
-            while page_number != False:
+            page_number = True
+            while page_number:
                 self.driver.get(url + f'&pn={page_number}')
                 if self.driver.current_url.__contains__("lock"):
                     WebDriverWait(self.driver, 3600).until(EC.presence_of_all_elements_located(
@@ -113,9 +122,9 @@ class Scraper:
                         scraper.file.write(href)
 
                 # time.sleep(0.5)
-                page_number += 1
-                if page_number == 91:
-                    page_number = False
+                # page_number += 1
+                # if page_number == 91:
+                #     page_number = False
 
         def scrape_depth2(self, url):
             meaning = ""
@@ -123,35 +132,41 @@ class Scraper:
                 WebDriverWait(scraper.driver, 3600).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "#boxWrd > h1"))
                 )
+
             if self.driver.current_url.__contains__("#[fl]"):
                 self.driver.get(self.driver.current_url.replace("#[fl]", ""))
-            try:
-                # ad_button = self.driver.find_element(By.CSS_SELECTOR, "#close-btn")
-                ad_button = WebDriverWait(scraper.driver, 30).until(
-                    EC.element_to_be_clickable((By.CSS_SELECTOR, "#close-btn"))
-                )
-                ad_button.click()
+            scraper.checked_urls[url] = True
+            # try:
+            #     # ad_button = self.driver.find_element(By.CSS_SELECTOR, "#close-btn")
+            #     ad_button = WebDriverWait(scraper.driver, 30).until(
+            #         EC.element_to_be_clickable((By.CSS_SELECTOR, "#close-btn"))
+            #     )
+            #     ad_button.click()
+            #
+            # except :
+            #     pass
 
-            except :
-                pass
-
-            title = WebDriverWait(scraper.driver, 30).until(
+            title = WebDriverWait(scraper.driver, 3600).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "#boxWrd > h1"))
             )
             word = title.text
-            dictionaries = WebDriverWait(scraper.driver, 30).until(
+            dictionaries = WebDriverWait(scraper.driver, 3600).until(
                 EC.presence_of_all_elements_located((By.CSS_SELECTOR, "body > main > div"))
             )
-            for dictionary in dictionaries:
-                if dictionary.text.__contains__("عمید"):
-                    WebDriverWait(scraper.driver, 30).until(
-                        EC.element_to_be_clickable((By.XPATH, ".//div[contains(@class, 'boxHd')]"))
-                    ).click()
-                    # button.click()
-                    text_field = WebDriverWait(scraper.driver, 30).until(
-                        EC.presence_of_element_located((By.XPATH, ".//div[contains(@class, 'boxBd boxBdNop')][1]")))
-                    meaning = text_field.text
-                    print(meaning)
+            try:
+                for dictionary in dictionaries:
+                    if dictionary.text.__contains__("عمید"):
+                        WebDriverWait(scraper.driver, 3600).until(
+                            EC.element_to_be_clickable((By.XPATH, ".//div[contains(@class, 'boxHd')]"))
+                        ).click()
+                        # button.click()
+                        text_field = WebDriverWait(scraper.driver, 3600).until(
+                            EC.presence_of_element_located((By.XPATH, ".//div[contains(@class, 'boxBd boxBdNop')][1]")))
+                        meaning = text_field.text
+                        print(meaning)
+            except ElementClickInterceptedException:
+                meaning = ''
+                pass
 
             data = {
                 "word": word,
@@ -160,7 +175,8 @@ class Scraper:
             }
             print(data)
             with scraper.print_lock:
-                scraper.scraped_data.append(data)
+                scraper.output.write(json.dumps(data, ensure_ascii=False) + '\n')
+                # scraper.scraped_data.append(data)
 
         def quit(self):
             self.driver.quit()
@@ -192,19 +208,28 @@ class Scraper:
             consumer.quit()
 
     def url_seperator(self):
+        check = {}
         with open('urls.txt', 'r') as f:
             line = f.readline().strip()
         urls = ["https://" + part for part in line.split('https://') if part]
+        for url in urls:
+            check[url] = False
+        with open('urls.json', 'w') as f:
+            f.write(json.dumps(check))
+        with open('urls.json', 'r') as json_file:
+            self.checked_urls = json.load(json_file)
+        urls = list(self.checked_urls.keys())
         self.producer = self.Producer(urls, scraper, 2)
 
 
 # Main script
 if __name__ == "__main__":
     file = open("urls.txt", "a")
-    scraper = Scraper(file)
+    output = open("result.txt", "a", encoding='utf8')
+    scraper = Scraper(file, output)
     # scraper.get_starting_urls()
     scraper.url_seperator()
     scraper.url_chain()
-    with open("dictionary.json", "w") as outfile:
-        json.dump(scraper.scraped_data, outfile)
+    # with open("dictionary.json", "w") as outfile:
+    #     json.dump(scraper.scraped_data, outfile)
     file.close()
